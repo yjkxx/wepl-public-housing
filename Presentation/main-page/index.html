@@ -1,0 +1,1611 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>한눈에 공공임대</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Custom styles -->
+    <link rel="stylesheet" href="style.css">
+    <style>
+      .housing-card {
+        border: 1px solid #e5e7eb !important; /* Tailwind gray-200 */
+        border-radius: 0.75rem;
+      }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 py-6">
+            <div class="flex items-center justify-between">
+                <div class="pl-3 flex items-center gap-3">
+                    <img src="logo.png" alt="로고" class="h-16 w-17 object-contain" />
+                    <div>
+                        <h1 class="text-3xl font-bold text-gray-900">한눈에 공공임대</h1>
+                        <p class="text-gray-600 mt-2">LH, SH, HUG 주택공고를 한곳에서</p>
+                    </div>
+                </div>
+                <button id="filter-toggle-btn" class="lg:hidden flex items-center gap-2 px-4 py-2 border rounded-md text-sm font-medium bg-white hover:bg-gray-50">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-filter w-4 h-4"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+                    필터
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div id="main-content" class="lg:flex lg:gap-0 lg:max-w-7xl lg:mx-auto lg:px-4 lg:py-8">
+        <!-- Floating Filter Panel -->
+        <div id="filter-panel-wrapper" class="lg:w-64 lg:flex-shrink-0">
+            <div id="filter-panel" class="lg:sticky lg:top-8 lg:block hidden fixed inset-0 z-50 flex items-start justify-start p-4 lg:p-0" style="margin-right: 16px;">
+                <div class="w-full max-w-sm lg:max-w-none shadow-xl border border-gray-200 bg-white lg:shadow-lg max-h-[calc(100vh-6rem)] lg:max-h-[calc(100vh-4rem)] rounded-lg overflow-hidden">
+                    <div class="h-full overflow-y-auto">
+                        <div class="p-6">
+                            <div class="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
+                                <h2 class="text-xl font-semibold text-gray-800">필터</h2>
+                                <div class="flex gap-2">
+                                    <button id="clear-filters-btn" class="px-3 py-1.5 border rounded-md text-xs font-medium bg-transparent hover:bg-gray-50">
+                                        초기화
+                                    </button>
+                                    <button id="filter-close-btn" class="lg:hidden px-3 py-1.5 rounded-md text-sm font-medium hover:bg-gray-100">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x w-4 h-4"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="space-y-6">
+                                <div>
+                                    <label for="supply_type_id" class="block text-sm font-medium mb-2">공고유형</label>
+                                    <div class="relative">
+                                        <select id="supply_type_id" class="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 pr-8 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 appearance-none">
+                                            <option value="">선택하세요</option>
+                                            <option value="1">매입임대</option>
+                                            <option value="2">국민임대</option>
+                                            <option value="3">안심주택</option>
+                                            <option value="4">장기전세</option>
+                                            <option value="5">행복주택</option>
+                                            <option value="6">신혼신생아 전세임대</option>
+                                            <option value="7">든든전세</option>
+                                        </select>
+                                        <svg class="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="6,9 12,15 18,9"></polyline>
+                                        </svg>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label for="region_province" class="block text-sm font-medium mb-2">지역 - 시/도</label>
+                                    <div class="relative">
+                                        <select id="region_province" class="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 pr-8 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 appearance-none">
+                                            <option value="">선택하세요</option>
+                                            <!-- Options will be populated by JavaScript -->
+                                        </select>
+                                        <svg class="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="6,9 12,15 18,9"></polyline>
+                                        </svg>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label for="region_city" class="block text-sm font-medium mb-2">지역 - 시/군/구</label>
+                                    <div class="relative">
+                                        <select id="region_city" class="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 pr-8 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 appearance-none">
+                                            <option value="">선택하세요</option>
+                                            <!-- Options will be populated by JavaScript -->
+                                        </select>
+                                        <svg class="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="6,9 12,15 18,9"></polyline>
+                                        </svg>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label for="house_type" class="block text-sm font-medium mb-2">주택 유형</label>
+                                    <div class="relative">
+                                        <select id="house_type" class="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 pr-8 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 appearance-none">
+                                            <option value="">선택하세요</option>
+                                            <!-- Options will be populated by JavaScript -->
+                                        </select>
+                                        <svg class="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="6,9 12,15 18,9"></polyline>
+                                        </svg>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label for="income" class="block text-sm font-medium mb-2">월 소득 (만원)</label>
+                                    <input type="number" id="income" placeholder="예: 5000" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
+                                </div>
+
+                                <div>
+                                    <label for="asset" class="block text-sm font-medium mb-2">총 자산 (만원)</label>
+                                    <input type="number" id="asset" placeholder="예: 20000" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
+                                </div>
+
+                                <div>
+                                    <label for="vehicle" class="block text-sm font-medium mb-2">보유차량가액 (만원)</label>
+                                    <input type="number" id="vehicle" placeholder="예: 3000" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Overlay for mobile -->
+        <div id="filter-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden hidden"></div>
+
+        <!-- Main Content -->
+        <div id="housing-list-container" class="flex-1 lg:ml-0" style="margin-left: 0px;">
+            <div class="max-w-5xl mx-auto px-0 py-0">
+                <!-- Results -->
+                <div class="mb-6">
+                    <p class="text-gray-600">
+                        총 <span id="result-count" class="font-semibold text-blue-600">0</span>개의 공고가 있습니다.
+                    </p>
+                </div>
+
+                <!-- Housing Cards -->
+                <div id="housing-cards-container" class="space-y-4">
+                    <!-- Housing items will be rendered here by JavaScript -->
+                </div>
+
+                <div id="no-results" class="text-center py-12 hidden">
+                    <p class="text-gray-500 text-lg">조건에 맞는 공고가 없습니다.</p>
+                    <button id="no-results-clear-btn" class="mt-4 px-4 py-2 border rounded-md text-sm font-medium bg-transparent hover:bg-gray-50">
+                        필터 초기화
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Embedded Data -->
+    <div id="housing-data" class="hidden">
+        <div class="housing-item"
+             data-notice_id="20060"
+             data-status="N"
+             data-region_province="경기도"
+             data-region_city="안양시"
+             data-address_detail="경기 안양시 만안구"
+             data-apply_start="2025-06-25"
+             data-apply_end="2025-07-07"
+             data-house_type="다세대주택"
+             data-supply_type_id="7"
+             data-application_url="https://www.khug.or.kr/jeonse/web/s07/s070102.jsp"
+             data-deposit="216000000.0"
+             data-monthly_rent="0.0"
+             data-agency_id="HUG"
+             data-income_limit="409"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+        <div class="housing-item"
+             data-notice_id="20059"
+             data-status="N"
+             data-region_province="경기도"
+             data-region_city="안양시"
+             data-address_detail="경기 안양시 만안구"
+             data-apply_start="2025-06-25"
+             data-apply_end="2025-07-07"
+             data-house_type="다세대주택"
+             data-supply_type_id="7"
+             data-application_url="https://www.khug.or.kr/jeonse/web/s07/s070102.jsp"
+             data-deposit="153000000.0"
+             data-monthly_rent="0.0"
+             data-agency_id="HUG"
+             data-income_limit="409"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+        <div class="housing-item"
+             data-notice_id="20058"
+             data-status="N"
+             data-region_province="경기도"
+             data-region_city="안양시"
+             data-address_detail="경기 안양시 만안구"
+             data-apply_start="2025-06-25"
+             data-apply_end="2025-07-07"
+             data-house_type="다세대주택"
+             data-supply_type_id="7"
+             data-application_url="https://www.khug.or.kr/jeonse/web/s07/s070102.jsp"
+             data-deposit="192600000.0"
+             data-monthly_rent="0.0"
+             data-agency_id="HUG"
+             data-income_limit="409"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+        <div class="housing-item"
+             data-notice_id="20057"
+             data-status="N"
+             data-region_province="경기도"
+             data-region_city="안양시"
+             data-address_detail="경기 안양시 만안구"
+             data-apply_start="2025-06-25"
+             data-apply_end="2025-07-07"
+             data-house_type="다세대주택"
+             data-supply_type_id="7"
+             data-application_url="https://www.khug.or.kr/jeonse/web/s07/s070102.jsp"
+             data-deposit="191700000.0"
+             data-monthly_rent="0.0"
+             data-agency_id="HUG"
+             data-income_limit="409"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+        <div class="housing-item"
+             data-notice_id="20056"
+             data-status="N"
+             data-region_province="경기도"
+             data-region_city="안양시"
+             data-address_detail="경기 안양시 만안구"
+             data-apply_start="2025-06-25"
+             data-apply_end="2025-07-07"
+             data-house_type="다세대주택"
+             data-supply_type_id="7"
+             data-application_url="https://www.khug.or.kr/jeonse/web/s07/s070102.jsp"
+             data-deposit="133200000.0"
+             data-monthly_rent="0.0"
+             data-agency_id="HUG"
+             data-income_limit="409"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+        <div class="housing-item"
+             data-notice_id="20055"
+             data-status="N"
+             data-region_province="경기도"
+             data-region_city="안양시"
+             data-address_detail="경기 안양시 만안구"
+             data-apply_start="2025-06-25"
+             data-apply_end="2025-07-07"
+             data-house_type="오피스텔(주거용)"
+             data-supply_type_id="7"
+             data-application_url="https://www.khug.or.kr/jeonse/web/s07/s070102.jsp"
+             data-deposit="232200000.0"
+             data-monthly_rent="0.0"
+             data-agency_id="HUG"
+             data-income_limit="409"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+        <div class="housing-item"
+             data-notice_id="20054"
+             data-status="N"
+             data-region_province="경기도"
+             data-region_city="안양시"
+             data-address_detail="경기 안양시 만안구"
+             data-apply_start="2025-06-25"
+             data-apply_end="2025-07-07"
+             data-house_type="오피스텔(주거용)"
+             data-supply_type_id="7"
+             data-application_url="https://www.khug.or.kr/jeonse/web/s07/s070102.jsp"
+             data-deposit="229500000.0"
+             data-monthly_rent="0.0"
+             data-agency_id="HUG"
+             data-income_limit="409"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+        <div class="housing-item"
+             data-notice_id="20053"
+             data-status="N"
+             data-region_province="경기도"
+             data-region_city="안양시"
+             data-address_detail="경기 안양시 만안구"
+             data-apply_start="2025-06-25"
+             data-apply_end="2025-07-07"
+             data-house_type="다세대주택"
+             data-supply_type_id="7"
+             data-application_url="https://www.khug.or.kr/jeonse/web/s07/s070102.jsp"
+             data-deposit="84600000.0"
+             data-monthly_rent="0.0"
+             data-agency_id="HUG"
+             data-income_limit="409"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+        <div class="housing-item"
+             data-notice_id="20052"
+             data-status="N"
+             data-region_province="경기도"
+             data-region_city="안양시"
+             data-address_detail="경기 안양시 만안구"
+             data-apply_start="2025-06-25"
+             data-apply_end="2025-07-07"
+             data-house_type="오피스텔(주거용)"
+             data-supply_type_id="7"
+             data-application_url="https://www.khug.or.kr/jeonse/web/s07/s070102.jsp"
+             data-deposit="247500000.0"
+             data-monthly_rent="0.0"
+             data-agency_id="HUG"
+             data-income_limit="409"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+        <div class="housing-item"
+             data-notice_id="20051"
+             data-status="N"
+             data-region_province="경기도"
+             data-region_city="안양시"
+             data-address_detail="경기 안양시 만안구"
+             data-apply_start="2025-06-25"
+             data-apply_end="2025-07-07"
+             data-house_type="오피스텔(주거용)"
+             data-supply_type_id="7"
+             data-application_url="https://www.khug.or.kr/jeonse/web/s07/s070102.jsp"
+             data-deposit="207000000.0"
+             data-monthly_rent="0.0"
+             data-agency_id="HUG"
+             data-income_limit="409"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+        <div class="housing-item"
+             data-notice_id="20050"
+             data-status="N"
+             data-region_province="경기도"
+             data-region_city="안양시"
+             data-address_detail="경기 안양시 만안구"
+             data-apply_start="2025-06-25"
+             data-apply_end="2025-07-07"
+             data-house_type="오피스텔(주거용)"
+             data-supply_type_id="7"
+             data-application_url="https://www.khug.or.kr/jeonse/web/s07/s070102.jsp"
+             data-deposit="194400000.0"
+             data-monthly_rent="0.0"
+             data-agency_id="HUG"
+             data-income_limit="409"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+        <div class="housing-item"
+             data-notice_id="20049"
+             data-status="N"
+             data-region_province="경기도"
+             data-region_city="안양시"
+             data-address_detail="경기 안양시 만안구"
+             data-apply_start="2025-06-25"
+             data-apply_end="2025-07-07"
+             data-house_type="다세대주택"
+             data-supply_type_id="7"
+             data-application_url="https://www.khug.or.kr/jeonse/web/s07/s070102.jsp"
+             data-deposit="196200000.0"
+             data-monthly_rent="0.0"
+             data-agency_id="HUG"
+             data-income_limit="409"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+        <div class="housing-item"
+             data-notice_id="20048"
+             data-status="N"
+             data-region_province="경기도"
+             data-region_city="안양시"
+             data-address_detail="경기 안양시 만안구"
+             data-apply_start="2025-06-25"
+             data-apply_end="2025-07-07"
+             data-house_type="다세대주택"
+             data-supply_type_id="7"
+             data-application_url="https://www.khug.or.kr/jeonse/web/s07/s070102.jsp"
+             data-deposit="245700000.0"
+             data-monthly_rent="0.0"
+             data-agency_id="HUG"
+             data-income_limit="409"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+        <div class="housing-item"
+             data-notice_id="20046"
+             data-status="N"
+             data-region_province="경기도"
+             data-region_city="수원시"
+             data-address_detail="경기 수원시 권선구"
+             data-apply_start="2025-06-25"
+             data-apply_end="2025-07-07"
+             data-house_type="오피스텔(주거용)"
+             data-supply_type_id="7"
+             data-application_url="https://www.khug.or.kr/jeonse/web/s07/s070102.jsp"
+             data-deposit="131400000.0"
+             data-monthly_rent="0.0"
+             data-agency_id="HUG"
+             data-income_limit="409"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+        <div class="housing-item"
+             data-notice_id="20044"
+             data-status="N"
+             data-region_province="경기도"
+             data-region_city="부천시"
+             data-address_detail="경기 부천시 원미구"
+             data-apply_start="2025-06-25"
+             data-apply_end="2025-07-07"
+             data-house_type="오피스텔(주거용)"
+             data-supply_type_id="7"
+             data-application_url="https://www.khug.or.kr/jeonse/web/s07/s070102.jsp"
+             data-deposit="217800000.0"
+             data-monthly_rent="0.0"
+             data-agency_id="HUG"
+             data-income_limit="409"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+        <div class="housing-item"
+             data-notice_id="20043"
+             data-status="N"
+             data-region_province="경기도"
+             data-region_city="부천시"
+             data-address_detail="경기 부천시 원미구"
+             data-apply_start="2025-06-25"
+             data-apply_end="2025-07-07"
+             data-house_type="다세대주택"
+             data-supply_type_id="7"
+             data-application_url="https://www.khug.or.kr/jeonse/web/s07/s070102.jsp"
+             data-deposit="175500000.0"
+             data-monthly_rent="0.0"
+             data-agency_id="HUG"
+             data-income_limit="409"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+        <div class="housing-item"
+             data-notice_id="20042"
+             data-status="N"
+             data-region_province="경기도"
+             data-region_city="부천시"
+             data-address_detail="경기 부천시 원미구"
+             data-apply_start="2025-06-25"
+             data-apply_end="2025-07-07"
+             data-house_type="다세대주택"
+             data-supply_type_id="7"
+             data-application_url="https://www.khug.or.kr/jeonse/web/s07/s070102.jsp"
+             data-deposit="196200000.0"
+             data-monthly_rent="0.0"
+             data-agency_id="HUG"
+             data-income_limit="409"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+        <div class="housing-item"
+             data-notice_id="20041"
+             data-status="N"
+             data-region_province="경기도"
+             data-region_city="부천시"
+             data-address_detail="경기 부천시 원미구"
+             data-apply_start="2025-06-25"
+             data-apply_end="2025-07-07"
+             data-house_type="다세대주택"
+             data-supply_type_id="7"
+             data-application_url="https://www.khug.or.kr/jeonse/web/s07/s070102.jsp"
+             data-deposit="207900000.0"
+             data-monthly_rent="0.0"
+             data-agency_id="HUG"
+             data-income_limit="409"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+        <div class="housing-item"
+             data-notice_id="20040"
+             data-status="N"
+             data-region_province="경기도"
+             data-region_city="부천시"
+             data-address_detail="경기 부천시 원미구"
+             data-apply_start="2025-06-25"
+             data-apply_end="2025-07-07"
+             data-house_type="다세대주택"
+             data-supply_type_id="7"
+             data-application_url="https://www.khug.or.kr/jeonse/web/s07/s070102.jsp"
+             data-deposit="171900000.0"
+             data-monthly_rent="0.0"
+             data-agency_id="HUG"
+             data-income_limit="409"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+        <div class="housing-item"
+             data-notice_id="20038"
+             data-status="Y"
+             data-region_province="경기도"
+             data-region_city="부천시"
+             data-address_detail="경기 부천시 원미구"
+             data-apply_start="2025-06-25"
+             data-apply_end="2025-08-07"
+             data-house_type="오피스텔(주거용)"
+             data-supply_type_id="7"
+             data-application_url="https://www.khug.or.kr/jeonse/web/s07/s070102.jsp"
+             data-deposit="173700000.0"
+             data-monthly_rent="0.0"
+             data-agency_id="HUG"
+             data-income_limit="409"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+        <div class="housing-item"
+             data-notice_id="20037"
+             data-status="N"
+             data-region_province="경기도"
+             data-region_city="부천시"
+             data-address_detail="경기 부천시 원미구"
+             data-apply_start="2025-06-25"
+             data-apply_end="2025-07-07"
+             data-house_type="다세대주택"
+             data-supply_type_id="7"
+             data-application_url="https://www.khug.or.kr/jeonse/web/s07/s070102.jsp"
+             data-deposit="202500000.0"
+             data-monthly_rent="0.0"
+             data-agency_id="HUG"
+             data-income_limit="409"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+        <div class="housing-item"
+             data-notice_id="20036"
+             data-status="N"
+             data-region_province="경기도"
+             data-region_city="부천시"
+             data-address_detail="경기 부천시 오정구"
+             data-apply_start="2025-06-25"
+             data-apply_end="2025-07-07"
+             data-house_type="다세대주택"
+             data-supply_type_id="7"
+             data-application_url="https://www.khug.or.kr/jeonse/web/s07/s070102.jsp"
+             data-deposit="229500000.0"
+             data-monthly_rent="0.0"
+             data-agency_id="HUG"
+             data-income_limit="409"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+        <div class="housing-item"
+             data-notice_id="20034"
+             data-status="N"
+             data-region_province="경기도"
+             data-region_city="부천시"
+             data-address_detail="경기 부천시 원미구"
+             data-apply_start="2025-06-25"
+             data-apply_end="2025-07-07"
+             data-house_type="오피스텔(주거용)"
+             data-supply_type_id="7"
+             data-application_url="https://www.khug.or.kr/jeonse/web/s07/s070102.jsp"
+             data-deposit="224100000.0"
+             data-monthly_rent="0.0"
+             data-agency_id="HUG"
+             data-income_limit="409"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+        <div class="housing-item"
+             data-notice_id="20032"
+             data-status="N"
+             data-region_province="경기도"
+             data-region_city="부천시"
+             data-address_detail="경기 부천시 원미구"
+             data-apply_start="2025-06-25"
+             data-apply_end="2025-07-07"
+             data-house_type="다세대주택"
+             data-supply_type_id="7"
+             data-application_url="https://www.khug.or.kr/jeonse/web/s07/s070102.jsp"
+             data-deposit="115200000.0"
+             data-monthly_rent="0.0"
+             data-agency_id="HUG"
+             data-income_limit="409"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+        <div class="housing-item"
+             data-notice_id="20031"
+             data-status="N"
+             data-region_province="경기도"
+             data-region_city="부천시"
+             data-address_detail="경기 부천시 원미구"
+             data-apply_start="2025-06-25"
+             data-apply_end="2025-07-07"
+             data-house_type="다세대주택"
+             data-supply_type_id="7"
+             data-application_url="https://www.khug.or.kr/jeonse/web/s07/s070102.jsp"
+             data-deposit="146700000.0"
+             data-monthly_rent="0.0"
+             data-agency_id="HUG"
+             data-income_limit="409"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+        <div class="housing-item"
+             data-notice_id="20030"
+             data-status="N"
+             data-region_province="경기도"
+             data-region_city="부천시"
+             data-address_detail="경기 부천시 원미구"
+             data-apply_start="2025-06-25"
+             data-apply_end="2025-07-07"
+             data-house_type="다세대주택"
+             data-supply_type_id="7"
+             data-application_url="https://www.khug.or.kr/jeonse/web/s07/s070102.jsp"
+             data-deposit="144000000.0"
+             data-monthly_rent="0.0"
+             data-agency_id="HUG"
+             data-income_limit="409"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+        <div class="housing-item"
+             data-notice_id="20028"
+             data-status="N"
+             data-region_province="경기도"
+             data-region_city="부천시"
+             data-address_detail="경기 부천시 원미구"
+             data-apply_start="2025-06-25"
+             data-apply_end="2025-07-07"
+             data-house_type="다세대주택"
+             data-supply_type_id="7"
+             data-application_url="https://www.khug.or.kr/jeonse/web/s07/s070102.jsp"
+             data-deposit="162000000.0"
+             data-monthly_rent="0.0"
+             data-agency_id="HUG"
+             data-income_limit="409"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+        <div class="housing-item"
+             data-notice_id="20026"
+             data-status="N"
+             data-region_province="경기도"
+             data-region_city="부천시"
+             data-address_detail="경기 부천시 원미구"
+             data-apply_start="2025-06-25"
+             data-apply_end="2025-07-07"
+             data-house_type="다세대주택"
+             data-supply_type_id="7"
+             data-application_url="https://www.khug.or.kr/jeonse/web/s07/s070102.jsp"
+             data-deposit="210600000.0"
+             data-monthly_rent="0.0"
+             data-agency_id="HUG"
+             data-income_limit="409"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+        <div class="housing-item"
+             data-notice_id="20025"
+             data-status="N"
+             data-region_province="경기도"
+             data-region_city="부천시"
+             data-address_detail="경기 부천시 원미구"
+             data-apply_start="2025-06-25"
+             data-apply_end="2025-07-07"
+             data-house_type="다세대주택"
+             data-supply_type_id="7"
+             data-application_url="https://www.khug.or.kr/jeonse/web/s07/s070102.jsp"
+             data-deposit="198900000.0"
+             data-monthly_rent="0.0"
+             data-agency_id="HUG"
+             data-income_limit="409"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+        <div class="housing-item"
+             data-notice_id="20024"
+             data-status="N"
+             data-region_province="경기도"
+             data-region_city="부천시"
+             data-address_detail="경기 부천시 원미구"
+             data-apply_start="2025-06-25"
+             data-apply_end="2025-07-07"
+             data-house_type="오피스텔(주거용)"
+             data-supply_type_id="7"
+             data-application_url="https://www.khug.or.kr/jeonse/web/s07/s070102.jsp"
+             data-deposit="118800000.0"
+             data-monthly_rent="0.0"
+             data-agency_id="HUG"
+             data-income_limit="409"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+        <div class="housing-item"
+             data-notice_id="20023"
+             data-status="N"
+             data-region_province="경기도"
+             data-region_city="부천시"
+             data-address_detail="경기 부천시 오정구"
+             data-apply_start="2025-06-25"
+             data-apply_end="2025-07-07"
+             data-house_type="오피스텔(주거용)"
+             data-supply_type_id="7"
+             data-application_url="https://www.khug.or.kr/jeonse/web/s07/s070102.jsp"
+             data-deposit="191700000.0"
+             data-monthly_rent="0.0"
+             data-agency_id="HUG"
+             data-income_limit="409"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+        <div class="housing-item"
+             data-notice_id="20022"
+             data-status="N"
+             data-region_province="경기도"
+             data-region_city="부천시"
+             data-address_detail="경기 부천시 원미구"
+             data-apply_start="2025-06-25"
+             data-apply_end="2025-07-07"
+             data-house_type="다세대주택"
+             data-supply_type_id="7"
+             data-application_url="https://www.khug.or.kr/jeonse/web/s07/s070102.jsp"
+             data-deposit="216900000.0"
+             data-monthly_rent="0.0"
+             data-agency_id="HUG"
+             data-income_limit="409"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+        <div class="housing-item"
+             data-notice_id="20021"
+             data-status="N"
+             data-region_province="경기도"
+             data-region_city="부천시"
+             data-address_detail="경기 부천시 원미구"
+             data-apply_start="2025-06-25"
+             data-apply_end="2025-07-07"
+             data-house_type="다세대주택"
+             data-supply_type_id="7"
+             data-application_url="https://www.khug.or.kr/jeonse/web/s07/s070102.jsp"
+             data-deposit="157500000.0"
+             data-monthly_rent="0.0"
+             data-agency_id="HUG"
+             data-income_limit="409"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+        <div class="housing-item"
+             data-notice_id="20020"
+             data-status="N"
+             data-region_province="경기도"
+             data-region_city="부천시"
+             data-address_detail="경기 부천시 원미구"
+             data-apply_start="2025-06-25"
+             data-apply_end="2025-07-07"
+             data-house_type="다세대주택"
+             data-supply_type_id="7"
+             data-application_url="https://www.khug.or.kr/jeonse/web/s07/s070102.jsp"
+             data-deposit="131400000.0"
+             data-monthly_rent="0.0"
+             data-agency_id="HUG"
+             data-income_limit="409"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+        <div class="housing-item"
+             data-notice_id="20019"
+             data-status="N"
+             data-region_province="경기도"
+             data-region_city="부천시"
+             data-address_detail="경기 부천시 원미구"
+             data-apply_start="2025-06-25"
+             data-apply_end="2025-07-07"
+             data-house_type="다세대주택"
+             data-supply_type_id="7"
+             data-application_url="https://www.khug.or.kr/jeonse/web/s07/s070102.jsp"
+             data-deposit="161100000.0"
+             data-monthly_rent="0.0"
+             data-agency_id="HUG"
+             data-income_limit="409"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+        <div class="housing-item"
+             data-notice_id="20017"
+             data-status="N"
+             data-region_province="경기도"
+             data-region_city="부천시"
+             data-address_detail="경기 부천시 원미구"
+             data-apply_start="2025-06-25"
+             data-apply_end="2025-07-07"
+             data-house_type="오피스텔(주거용)"
+             data-supply_type_id="7"
+             data-application_url="https://www.khug.or.kr/jeonse/web/s07/s070102.jsp"
+             data-deposit="208800000.0"
+             data-monthly_rent="0.0"
+             data-agency_id="HUG"
+             data-income_limit="409"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+        <div class="housing-item"
+             data-notice_id="20016"
+             data-status="N"
+             data-region_province="경기도"
+             data-region_city="부천시"
+             data-address_detail="경기 부천시 원미구"
+             data-apply_start="2025-06-25"
+             data-apply_end="2025-07-07"
+             data-house_type="다세대주택"
+             data-supply_type_id="7"
+             data-application_url="https://www.khug.or.kr/jeonse/web/s07/s070102.jsp"
+             data-deposit="157500000.0"
+             data-monthly_rent="0.0"
+             data-agency_id="HUG"
+             data-income_limit="409"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+        <div class="housing-item"
+             data-notice_id="20015"
+             data-status="N"
+             data-region_province="경기도"
+             data-region_city="부천시"
+             data-address_detail="경기 부천시 원미구"
+             data-apply_start="2025-06-25"
+             data-apply_end="2025-07-07"
+             data-house_type="다세대주택"
+             data-supply_type_id="7"
+             data-application_url="https://www.khug.or.kr/jeonse/web/s07/s070102.jsp"
+             data-deposit="126000000.0"
+             data-monthly_rent="0.0"
+             data-agency_id="HUG"
+             data-income_limit="409"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+        <div class="housing-item"
+             data-notice_id="20014"
+             data-status="N"
+             data-region_province="경기도"
+             data-region_city="부천시"
+             data-address_detail="경기 부천시 원미구"
+             data-apply_start="2025-06-25"
+             data-apply_end="2025-07-07"
+             data-house_type="다세대주택"
+             data-supply_type_id="7"
+             data-application_url="https://www.khug.or.kr/jeonse/web/s07/s070102.jsp"
+             data-deposit="202500000.0"
+             data-monthly_rent="0.0"
+             data-agency_id="HUG"
+             data-income_limit="409"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+        <div class="housing-item"
+             data-notice_id="20013"
+             data-status="Y"
+             data-region_province="경기도"
+             data-region_city="부천시"
+             data-address_detail="경기 부천시 오정구"
+             data-apply_start="2025-06-25"
+             data-apply_end="2025-08-10"
+             data-house_type="다세대주택"
+             data-supply_type_id="7"
+             data-application_url="https://www.khug.or.kr/jeonse/web/s07/s070102.jsp"
+             data-deposit="171900000.0"
+             data-monthly_rent="0.0"
+             data-agency_id="HUG"
+             data-income_limit="409"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+        <div class="housing-item"
+             data-notice_id="20012"
+             data-status="N"
+             data-region_province="경기도"
+             data-region_city="부천시"
+             data-address_detail="경기 부천시 오정구"
+             data-apply_start="2025-06-25"
+             data-apply_end="2025-07-07"
+             data-house_type="다세대주택"
+             data-supply_type_id="7"
+             data-application_url="https://www.khug.or.kr/jeonse/web/s07/s070102.jsp"
+             data-deposit="270000000.0"
+             data-monthly_rent="0.0"
+             data-agency_id="HUG"
+             data-income_limit="409"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+        <div class="housing-item"
+             data-notice_id="20011"
+             data-status="N"
+             data-region_province="경기도"
+             data-region_city="부천시"
+             data-address_detail="경기 부천시 오정구"
+             data-apply_start="2025-06-25"
+             data-apply_end="2025-07-07"
+             data-house_type="다세대주택"
+             data-supply_type_id="7"
+             data-application_url="https://www.khug.or.kr/jeonse/web/s07/s070102.jsp"
+             data-deposit="184500000.0"
+             data-monthly_rent="0.0"
+             data-agency_id="HUG"
+             data-income_limit="409"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+        <div class="housing-item"
+             data-notice_id="20010"
+             data-status="N"
+             data-region_province="경기도"
+             data-region_city="부천시"
+             data-address_detail="경기 부천시 오정구"
+             data-apply_start="2025-06-25"
+             data-apply_end="2025-07-07"
+             data-house_type="다세대주택"
+             data-supply_type_id="7"
+             data-application_url="https://www.khug.or.kr/jeonse/web/s07/s070102.jsp"
+             data-deposit="205200000.0"
+             data-monthly_rent="0.0"
+             data-agency_id="HUG"
+             data-income_limit="409"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+        <div class="housing-item"
+             data-notice_id="20009"
+             data-status="N"
+             data-region_province="경기도"
+             data-region_city="부천시"
+             data-address_detail="경기 부천시 오정구"
+             data-apply_start="2025-06-25"
+             data-apply_end="2025-07-07"
+             data-house_type="다세대주택"
+             data-supply_type_id="7"
+             data-application_url="https://www.khug.or.kr/jeonse/web/s07/s070102.jsp"
+             data-deposit="235800000.0"
+             data-monthly_rent="0.0"
+             data-agency_id="HUG"
+             data-income_limit="409"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+        <div class="housing-item"
+             data-notice_id="20008"
+             data-status="N"
+             data-region_province="경기도"
+             data-region_city="부천시"
+             data-address_detail="경기 부천시 오정구"
+             data-apply_start="2025-06-25"
+             data-apply_end="2025-07-07"
+             data-house_type="다세대주택"
+             data-supply_type_id="7"
+             data-application_url="https://www.khug.or.kr/jeonse/web/s07/s070102.jsp"
+             data-deposit="158400000.0"
+             data-monthly_rent="0.0"
+             data-agency_id="HUG"
+             data-income_limit="409"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+        <div class="housing-item"
+             data-notice_id="20007"
+             data-status="N"
+             data-region_province="경기도"
+             data-region_city="부천시"
+             data-address_detail="경기 부천시 오정구"
+             data-apply_start="2025-06-25"
+             data-apply_end="2025-07-07"
+             data-house_type="다세대주택"
+             data-supply_type_id="7"
+             data-application_url="https://www.khug.or.kr/jeonse/web/s07/s070102.jsp"
+             data-deposit="211500000.0"
+             data-monthly_rent="0.0"
+             data-agency_id="HUG"
+             data-income_limit="409"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+        <div class="housing-item"
+             data-notice_id="20006"
+             data-status="N"
+             data-region_province="경기도"
+             data-region_city="부천시"
+             data-address_detail="경기 부천시 오정구"
+             data-apply_start="2025-06-25"
+             data-apply_end="2025-07-07"
+             data-house_type="다세대주택"
+             data-supply_type_id="7"
+             data-application_url="https://www.khug.or.kr/jeonse/web/s07/s070102.jsp"
+             data-deposit="198900000.0"
+             data-monthly_rent="0.0"
+             data-agency_id="HUG"
+             data-income_limit="409"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+        <div class="housing-item"
+             data-notice_id="20005"
+             data-status="N"
+             data-region_province="경기도"
+             data-region_city="부천시"
+             data-address_detail="경기 부천시 오정구"
+             data-apply_start="2025-06-25"
+             data-apply_end="2025-07-07"
+             data-house_type="다세대주택"
+             data-supply_type_id="7"
+             data-application_url="https://www.khug.or.kr/jeonse/web/s07/s070102.jsp"
+             data-deposit="132300000.0"
+             data-monthly_rent="0.0"
+             data-agency_id="HUG"
+             data-income_limit="409"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+        <div class="housing-item"
+             data-notice_id="20004"
+             data-status="N"
+             data-region_province="경기도"
+             data-region_city="부천시"
+             data-address_detail="경기 부천시 오정구"
+             data-apply_start="2025-06-25"
+             data-apply_end="2025-07-07"
+             data-house_type="다세대주택"
+             data-supply_type_id="7"
+             data-application_url="https://www.khug.or.kr/jeonse/web/s07/s070102.jsp"
+             data-deposit="140400000.0"
+             data-monthly_rent="0.0"
+             data-agency_id="HUG"
+             data-income_limit="409"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+        <div class="housing-item"
+             data-notice_id="20003"
+             data-status="N"
+             data-region_province="경기도"
+             data-region_city="부천시"
+             data-address_detail="경기 부천시 오정구"
+             data-apply_start="2025-06-25"
+             data-apply_end="2025-07-07"
+             data-house_type="다세대주택"
+             data-supply_type_id="7"
+             data-application_url="https://www.khug.or.kr/jeonse/web/s07/s070102.jsp"
+             data-deposit="160200000.0"
+             data-monthly_rent="0.0"
+             data-agency_id="HUG"
+             data-income_limit="409"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+        <div class="housing-item"
+             data-notice_id="20002"
+             data-status="N"
+             data-region_province="경기도"
+             data-region_city="부천시"
+             data-address_detail="경기 부천시 오정구"
+             data-apply_start="2025-06-25"
+             data-apply_end="2025-07-07"
+             data-house_type="다세대주택"
+             data-supply_type_id="7"
+             data-application_url="https://www.khug.or.kr/jeonse/web/s07/s070102.jsp"
+             data-deposit="153000000.0"
+             data-monthly_rent="0.0"
+             data-agency_id="HUG"
+             data-income_limit="409"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+        <div class="housing-item"
+             data-notice_id="20001"
+             data-status="N"
+             data-region_province="경기도"
+             data-region_city="부천시"
+             data-address_detail="경기 부천시 오정구"
+             data-apply_start="2025-06-25"
+             data-apply_end="2025-07-07"
+             data-house_type="다세대주택"
+             data-supply_type_id="7"
+             data-application_url="https://www.khug.or.kr/jeonse/web/s07/s070102.jsp"
+             data-deposit="145800000.0"
+             data-monthly_rent="0.0"
+             data-agency_id="HUG"
+             data-income_limit="409"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+        <div class="housing-item"
+             data-notice_id="18647"
+             data-status="Y"
+             data-region_province="충청남도"
+             data-region_city="당진시"
+             data-address_detail=""
+             data-apply_start="2025-07-28"
+             data-apply_end="2026-08-10"
+             data-house_type="다가구주택"
+             data-supply_type_id="1"
+             data-application_url="https://www.myhome.go.kr/hws/portal/sch/selectRsdtRcritNtcDetailView.do?pblancId=18647"
+             data-deposit="0.0"
+             data-monthly_rent="0.0"
+             data-agency_id="LH"
+             data-income_limit="272"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+        <div class="housing-item"
+             data-notice_id="18646"
+             data-status="Y"
+             data-region_province="경상남도"
+             data-region_city="양산시"
+             data-address_detail=""
+             data-apply_start="2025-07-28"
+             data-apply_end="2025-12-31"
+             data-house_type="다가구주택"
+             data-supply_type_id="1"
+             data-application_url="https://www.myhome.go.kr/hws/portal/sch/selectRsdtRcritNtcDetailView.do?pblancId=18646"
+             data-deposit="0.0"
+             data-monthly_rent="0.0"
+             data-agency_id="LH"
+             data-income_limit="272"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+        <div class="housing-item"
+             data-notice_id="18645"
+             data-status="Y"
+             data-region_province="대구광역시"
+             data-region_city="북구"
+             data-address_detail=""
+             data-apply_start="2025-07-28"
+             data-apply_end="2025-08-14"
+             data-house_type="다가구주택"
+             data-supply_type_id="1"
+             data-application_url="https://www.myhome.go.kr/hws/portal/sch/selectRsdtRcritNtcDetailView.do?pblancId=18645"
+             data-deposit="0.0"
+             data-monthly_rent="0.0"
+             data-agency_id="LH"
+             data-income_limit="272"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+        <div class="housing-item"
+             data-notice_id="18644"
+             data-status="Y"
+             data-region_province="부산광역시"
+             data-region_city="강서구"
+             data-address_detail="부산광역시 강서구 명지국제5로 165 "
+             data-apply_start="2025-08-04"
+             data-apply_end="2025-08-05"
+             data-house_type="아파트"
+             data-supply_type_id="1"
+             data-application_url="https://www.myhome.go.kr/hws/portal/sch/selectRsdtRcritNtcDetailView.do?pblancId=18644&houseSn=1"
+             data-deposit="61528000.0"
+             data-monthly_rent="593690.0"
+             data-agency_id="LH"
+             data-income_limit="272"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+        <div class="housing-item"
+             data-notice_id="18643"
+             data-status="Y"
+             data-region_province="충청남도"
+             data-region_city="천안시 서북구"
+             data-address_detail="충청남도 천안시 서북구 봉서산샛길 64 "
+             data-apply_start="2025-08-12"
+             data-apply_end="2025-08-12"
+             data-house_type="아파트"
+             data-supply_type_id="1"
+             data-application_url="https://www.myhome.go.kr/hws/portal/sch/selectRsdtRcritNtcDetailView.do?pblancId=18643&houseSn=1"
+             data-deposit="15586000.0"
+             data-monthly_rent="225420.0"
+             data-agency_id="LH"
+             data-income_limit="272"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+        <div class="housing-item"
+             data-notice_id="18642"
+             data-status="Y"
+             data-region_province="세종특별자치시"
+             data-region_city=""
+             data-address_detail="세종특별자치시 산울동 372-2 "
+             data-apply_start="2025-08-04"
+             data-apply_end="2025-08-06"
+             data-house_type="아파트"
+             data-supply_type_id="1"
+             data-application_url="https://www.myhome.go.kr/hws/portal/sch/selectRsdtRcritNtcDetailView.do?pblancId=18642&houseSn=1"
+             data-deposit="6997000.0"
+             data-monthly_rent="62800.0"
+             data-agency_id="LH"
+             data-income_limit="272"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+        <div class="housing-item"
+             data-notice_id="18640"
+             data-status="Y"
+             data-region_province="전북특별자치도"
+             data-region_city="군산시"
+             data-address_detail="전북특별자치도 군산시 동아로 12 "
+             data-apply_start="2025-08-05"
+             data-apply_end="2026-08-04"
+             data-house_type="아파트"
+             data-supply_type_id="1"
+             data-application_url="https://www.myhome.go.kr/hws/portal/sch/selectRsdtRcritNtcDetailView.do?pblancId=18640&houseSn=1"
+             data-deposit="6470000.0"
+             data-monthly_rent="54340.0"
+             data-agency_id="LH"
+             data-income_limit="272"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+        <div class="housing-item"
+             data-notice_id="18639"
+             data-status="Y"
+             data-region_province="부산광역시"
+             data-region_city="기장군"
+             data-address_detail="부산광역시 기장군 정관읍 정관1로 51 "
+             data-apply_start="2025-07-24"
+             data-apply_end="2025-08-06"
+             data-house_type="아파트"
+             data-supply_type_id="1"
+             data-application_url="https://www.myhome.go.kr/hws/portal/sch/selectRsdtRcritNtcDetailView.do?pblancId=18639&houseSn=1"
+             data-deposit="15190000.0"
+             data-monthly_rent="88170.0"
+             data-agency_id="LH"
+             data-income_limit="272"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+        <div class="housing-item"
+             data-notice_id="18638"
+             data-status="Y"
+             data-region_province="부산광역시"
+             data-region_city="기장군"
+             data-address_detail="부산광역시 기장군 정관읍 산단4로 160 "
+             data-apply_start="2025-07-24"
+             data-apply_end="2025-08-06"
+             data-house_type="아파트"
+             data-supply_type_id="1"
+             data-application_url="https://www.myhome.go.kr/hws/portal/sch/selectRsdtRcritNtcDetailView.do?pblancId=18638&houseSn=1"
+             data-deposit="36608000.0"
+             data-monthly_rent="220900.0"
+             data-agency_id="LH"
+             data-income_limit="272"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+        <div class="housing-item"
+             data-notice_id="18637"
+             data-status="Y"
+             data-region_province="부산광역시"
+             data-region_city="사하구"
+             data-address_detail=""
+             data-apply_start="2025-08-04"
+             data-apply_end="2025-08-08"
+             data-house_type="다가구주택"
+             data-supply_type_id="1"
+             data-application_url="https://www.myhome.go.kr/hws/portal/sch/selectRsdtRcritNtcDetailView.do?pblancId=18637"
+             data-deposit="0.0"
+             data-monthly_rent="0.0"
+             data-agency_id="LH"
+             data-income_limit="272"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+        <div class="housing-item"
+             data-notice_id="18636"
+             data-status="Y"
+             data-region_province="전북특별자치도"
+             data-region_city="군산시"
+             data-address_detail="전북특별자치도 군산시 동아로 17 "
+             data-apply_start="2025-08-05"
+             data-apply_end="2026-08-04"
+             data-house_type="아파트"
+             data-supply_type_id="1"
+             data-application_url="https://www.myhome.go.kr/hws/portal/sch/selectRsdtRcritNtcDetailView.do?pblancId=18636&houseSn=1"
+             data-deposit="6862000.0"
+             data-monthly_rent="68620.0"
+             data-agency_id="LH"
+             data-income_limit="272"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+        <div class="housing-item"
+             data-notice_id="18635"
+             data-status="Y"
+             data-region_province="대전광역시"
+             data-region_city="유성구"
+             data-address_detail="대전광역시 유성구 원신흥남로27번길 68 "
+             data-apply_start="2025-07-28"
+             data-apply_end="2025-07-30"
+             data-house_type="아파트"
+             data-supply_type_id="1"
+             data-application_url="https://www.myhome.go.kr/hws/portal/sch/selectRsdtRcritNtcDetailView.do?pblancId=18635&houseSn=1"
+             data-deposit="17442000.0"
+             data-monthly_rent="84300.0"
+             data-agency_id="LH"
+             data-income_limit="272"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+        <div class="housing-item"
+             data-notice_id="18633"
+             data-status="Y"
+             data-region_province="강원특별자치도"
+             data-region_city="원주시"
+             data-address_detail="강원특별자치도 원주시 문막읍 원문로 1684 "
+             data-apply_start="2025-07-29"
+             data-apply_end="2025-07-29"
+             data-house_type="아파트"
+             data-supply_type_id="1"
+             data-application_url="https://www.myhome.go.kr/hws/portal/sch/selectRsdtRcritNtcDetailView.do?pblancId=18633&houseSn=1"
+             data-deposit="21558000.0"
+             data-monthly_rent="144170.0"
+             data-agency_id="LH"
+             data-income_limit="272"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+        <div class="housing-item"
+             data-notice_id="18632"
+             data-status="Y"
+             data-region_province="대구광역시"
+             data-region_city=""
+             data-address_detail=""
+             data-apply_start="2025-08-04"
+             data-apply_end="2025-08-07"
+             data-house_type="다가구주택"
+             data-supply_type_id="1"
+             data-application_url="https://www.myhome.go.kr/hws/portal/sch/selectRsdtRcritNtcDetailView.do?pblancId=18632"
+             data-deposit="0.0"
+             data-monthly_rent="0.0"
+             data-agency_id="LH"
+             data-income_limit="272"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+        <div class="housing-item"
+             data-notice_id="18631"
+             data-status="Y"
+             data-region_province="강원특별자치도"
+             data-region_city="영월군"
+             data-address_detail="강원특별자치도 영월군 주천면 주천로89번길 26-23 "
+             data-apply_start="2025-08-06"
+             data-apply_end="2025-08-06"
+             data-house_type="아파트"
+             data-supply_type_id="1"
+             data-application_url="https://www.myhome.go.kr/hws/portal/sch/selectRsdtRcritNtcDetailView.do?pblancId=18631&houseSn=1"
+             data-deposit="2366000.0"
+             data-monthly_rent="47050.0"
+             data-agency_id="LH"
+             data-income_limit="272"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+        <div class="housing-item"
+             data-notice_id="10010"
+             data-status="N"
+             data-region_province="서울특별시"
+             data-region_city="서대문구"
+             data-address_detail="서울특별시 서대문구 DMC에코자이 서"
+             data-apply_start="2025-07-01"
+             data-apply_end="2025-07-18"
+             data-house_type="아파트"
+             data-supply_type_id="5"
+             data-application_url="https://www.i-sh.co.kr/main/lay2/program/S1T297C4476/www/brd/m_247/list.do?multi_itm_seq=2"
+             data-deposit="136800000.0"
+             data-monthly_rent="488000.0"
+             data-agency_id="SH"
+             data-income_limit="327"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+        <div class="housing-item"
+             data-notice_id="10009"
+             data-status="N"
+             data-region_province="서울특별시"
+             data-region_city="성북구"
+             data-address_detail="서울특별시 성북구 꿈의숲아이파크 서울"
+             data-apply_start="2025-07-01"
+             data-apply_end="2025-07-18"
+             data-house_type="아파트"
+             data-supply_type_id="5"
+             data-application_url="https://www.i-sh.co.kr/main/lay2/program/S1T297C4476/www/brd/m_247/list.do?multi_itm_seq=2"
+             data-deposit="136090000.0"
+             data-monthly_rent="498000.0"
+             data-agency_id="SH"
+             data-income_limit="327"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+        <div class="housing-item"
+             data-notice_id="10008"
+             data-status="N"
+             data-region_province="서울특별시"
+             data-region_city="은평구"
+             data-address_detail="서울특별시 은평구 역촌동 77-26,"
+             data-apply_start="2025-07-01"
+             data-apply_end="2025-07-18"
+             data-house_type="다세대주택"
+             data-supply_type_id="1"
+             data-application_url="https://www.i-sh.co.kr/main/lay2/program/S1T297C4476/www/brd/m_247/list.do?multi_itm_seq=2"
+             data-deposit="84230000.0"
+             data-monthly_rent="868000.0"
+             data-agency_id="SH"
+             data-income_limit="272"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+        <div class="housing-item"
+             data-notice_id="10007"
+             data-status="N"
+             data-region_province="서울특별시"
+             data-region_city="구로구"
+             data-address_detail="서울특별시 구로구 고척동 241-64"
+             data-apply_start="2025-07-01"
+             data-apply_end="2025-07-18"
+             data-house_type="다세대주택"
+             data-supply_type_id="1"
+             data-application_url="https://www.i-sh.co.kr/main/lay2/program/S1T297C4476/www/brd/m_247/list.do?multi_itm_seq=2"
+             data-deposit="53740000.0"
+             data-monthly_rent="553800.0"
+             data-agency_id="SH"
+             data-income_limit="272"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+        <div class="housing-item"
+             data-notice_id="10006"
+             data-status="N"
+             data-region_province="서울특별시"
+             data-region_city="강동구"
+             data-address_detail="서울특별시 강동구 성내동 458-8 "
+             data-apply_start="2025-07-01"
+             data-apply_end="2025-07-18"
+             data-house_type="다세대주택"
+             data-supply_type_id="1"
+             data-application_url="https://www.i-sh.co.kr/main/lay2/program/S1T297C4476/www/brd/m_247/list.do?multi_itm_seq=2"
+             data-deposit="59690000.0"
+             data-monthly_rent="615000.0"
+             data-agency_id="SH"
+             data-income_limit="272"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+        <div class="housing-item"
+             data-notice_id="10005"
+             data-status="N"
+             data-region_province="서울특별시"
+             data-region_city="중랑구"
+             data-address_detail="서울특별시 중랑구 중화동 리버센 SK"
+             data-apply_start="2025-07-01"
+             data-apply_end="2025-07-18"
+             data-house_type="아파트"
+             data-supply_type_id="4"
+             data-application_url="https://www.i-sh.co.kr/main/lay2/program/S1T297C4476/www/brd/m_247/list.do?multi_itm_seq=2"
+             data-deposit="336180000.0"
+             data-monthly_rent="0.0"
+             data-agency_id="SH"
+             data-income_limit="409"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+        <div class="housing-item"
+             data-notice_id="10004"
+             data-status="N"
+             data-region_province="서울특별시"
+             data-region_city="강남구"
+             data-address_detail="서울특별시 강남구 도곡동 954-17"
+             data-apply_start="2025-07-01"
+             data-apply_end="2025-07-18"
+             data-house_type="다세대주택"
+             data-supply_type_id="3"
+             data-application_url="https://www.i-sh.co.kr/main/lay2/program/S1T297C4476/www/brd/m_247/list.do?multi_itm_seq=2"
+             data-deposit="42150000.0"
+             data-monthly_rent="186000.0"
+             data-agency_id="SH"
+             data-income_limit="272"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+        <div class="housing-item"
+             data-notice_id="10003"
+             data-status="N"
+             data-region_province="서울특별시"
+             data-region_city="동대문구"
+             data-address_detail="서울특별시 동대문구 이문동 149-3"
+             data-apply_start="2025-07-01"
+             data-apply_end="2025-07-18"
+             data-house_type="다세대주택"
+             data-supply_type_id="5"
+             data-application_url="https://www.i-sh.co.kr/main/lay2/program/S1T297C4476/www/brd/m_247/list.do?multi_itm_seq=2"
+             data-deposit="69120000.0"
+             data-monthly_rent="2777000.0"
+             data-agency_id="SH"
+             data-income_limit="327"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+        <div class="housing-item"
+             data-notice_id="10002"
+             data-status="N"
+             data-region_province="서울특별시"
+             data-region_city="중랑구"
+             data-address_detail="서울특별시 중랑구 상봉동 109-28"
+             data-apply_start="2025-07-01"
+             data-apply_end="2025-07-18"
+             data-house_type="다세대주택"
+             data-supply_type_id="4"
+             data-application_url="https://www.i-sh.co.kr/main/lay2/program/S1T297C4476/www/brd/m_247/list.do?multi_itm_seq=2"
+             data-deposit="31050000.0"
+             data-monthly_rent="137000.0"
+             data-agency_id="SH"
+             data-income_limit="409"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+        <div class="housing-item"
+             data-notice_id="10001"
+             data-status="N"
+             data-region_province="서울특별시"
+             data-region_city="관악구"
+             data-address_detail="서울특별시 관악구 신림동 1644-3"
+             data-apply_start="2025-07-01"
+             data-apply_end="2025-07-18"
+             data-house_type="다세대주택"
+             data-supply_type_id="3"
+             data-application_url="https://www.i-sh.co.kr/main/lay2/program/S1T297C4476/www/brd/m_247/list.do?multi_itm_seq=2"
+             data-deposit="23550000.0"
+             data-monthly_rent="104000.0"
+             data-agency_id="SH"
+             data-income_limit="272"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+        <div class="housing-item"
+             data-notice_id="3"
+             data-status="N"
+             data-region_province="경기도"
+             data-region_city="평택시"
+             data-address_detail="경기도 평택시 비전3로 13 "
+             data-apply_start="2025-07-23"
+             data-apply_end="2025-07-24"
+             data-house_type="아파트"
+             data-supply_type_id="5"
+             data-application_url="https://www.myhome.go.kr/hws/portal/sch/selectRsdtRcritNtcDetailView.do?pblancId=18496&houseSn=3"
+             data-deposit="24786000.0"
+             data-monthly_rent="117730.0"
+             data-agency_id="LH"
+             data-income_limit="327"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+        <div class="housing-item"
+             data-notice_id="2"
+             data-status="N"
+             data-region_province="경기도"
+             data-region_city="평택시"
+             data-address_detail="경기도 평택시 고덕국제5로 160 "
+             data-apply_start="2025-07-23"
+             data-apply_end="2025-07-24"
+             data-house_type="아파트"
+             data-supply_type_id="5"
+             data-application_url="https://www.myhome.go.kr/hws/portal/sch/selectRsdtRcritNtcDetailView.do?pblancId=18496&houseSn=2"
+             data-deposit="26910000.0"
+             data-monthly_rent="127820.0"
+             data-agency_id="LH"
+             data-income_limit="327"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+        <div class="housing-item"
+             data-notice_id="1"
+             data-status="Y"
+             data-region_province="강원특별자치도"
+             data-region_city="태백시"
+             data-address_detail="강원특별자치도 태백시 청솔길 35 "
+             data-apply_start="2025-07-30"
+             data-apply_end="2025-07-31"
+             data-house_type="아파트"
+             data-supply_type_id="2"
+             data-application_url="https://www.myhome.go.kr/hws/portal/sch/selectRsdtRcritNtcDetailView.do?pblancId=18497&houseSn=1"
+             data-deposit="10429000.0"
+             data-monthly_rent="167330.0"
+             data-agency_id="LH"
+             data-income_limit="191"
+             data-asset_limit="32900"
+             data-vehicle_limit="3557">
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

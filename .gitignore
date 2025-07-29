@@ -1,0 +1,57 @@
+# Environment variables
+.env
+
+# AWS credentials and config
+awsuser1-accesskey.txt
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Lambda deployment
+lambda-deployment.zip
+*.zip
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+trust-policy-lambda.json
+response.json
+output.json
+
+# Generated HTML pages (local development)
+*-*.html
+!housing-1.html
+!index.html
