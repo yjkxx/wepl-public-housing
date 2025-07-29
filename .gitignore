@@ -51,6 +51,9 @@ trust-policy-lambda.json
 response.json
 output.json
 
+# Video generator directory (contains API keys)
+WebAppServer/container-video-generator/
+
 # Generated HTML pages (local development)
 *-*.html
 !housing-1.html
