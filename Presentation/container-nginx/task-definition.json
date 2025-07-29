@@ -1,0 +1,28 @@
+{
+  "family": "TASK_DEFINITION_FAMILY_PLACEHOLDER",
+  "networkMode": "bridge",
+  "requiresCompatibilities": ["EC2"],
+  "executionRoleArn": "EXECUTION_ROLE_ARN_PLACEHOLDER",
+  "containerDefinitions": [
+    {
+      "name": "nginx-container",
+      "image": "IMAGE_URI_PLACEHOLDER",
+      "memory": 512,
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 80,
+          "protocol": "tcp"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "LOG_GROUP_PLACEHOLDER",
+          "awslogs-region": "AWS_REGION_PLACEHOLDER",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ]
+}

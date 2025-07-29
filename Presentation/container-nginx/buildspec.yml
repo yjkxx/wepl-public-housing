@@ -22,7 +22,22 @@ phases:
       - docker push $REPOSITORY_URI:$IMAGE_TAG
       - docker push $REPOSITORY_URI:latest
       - echo Writing image definitions file...
-      - printf '[{"name":"wepl-nginx","imageUri":"%s"}]' $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
+      - printf '[{"name":"nginx-container","imageUri":"%s"}]' $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
+      - echo Getting current task definition...
+      - TASK_DEFINITION_FAMILY=${ECS_TASK_DEFINITION_FAMILY:-${STACK_NAME}-task}
+      - echo "Using task definition family:" $TASK_DEFINITION_FAMILY
+      - TASK_DEFINITION=$(aws ecs describe-task-definition --task-definition $TASK_DEFINITION_FAMILY --region $AWS_DEFAULT_REGION --query 'taskDefinition' --output json)
+      - echo "Retrieved task definition successfully"
+      - echo "Updating task definition with new image..."
+      - NEW_TASK_DEFINITION=$(echo $TASK_DEFINITION | jq --arg IMAGE_URI "$REPOSITORY_URI:$IMAGE_TAG" '.containerDefinitions[0].image = $IMAGE_URI | del(.taskDefinitionArn) | del(.revision) | del(.status) | del(.requiresAttributes) | del(.placementConstraints) | del(.compatibilities) | del(.registeredAt) | del(.registeredBy)')
+      - echo "Registering new task definition..."
+      - NEW_TASK_DEF_ARN=$(aws ecs register-task-definition --region $AWS_DEFAULT_REGION --cli-input-json "$NEW_TASK_DEFINITION" --query 'taskDefinition.taskDefinitionArn' --output text)
+      - echo "New task definition registered:" $NEW_TASK_DEF_ARN
+      - echo "Updating ECS service..."
+      - ECS_SERVICE_NAME=${ECS_SERVICE_NAME:-${STACK_NAME}-service}
+      - ECS_CLUSTER_NAME=${ECS_CLUSTER_NAME:-${STACK_NAME}-cluster}
+      - aws ecs update-service --region $AWS_DEFAULT_REGION --cluster $ECS_CLUSTER_NAME --service $ECS_SERVICE_NAME --task-definition $NEW_TASK_DEF_ARN
+      - echo "ECS service update initiated successfully"
 
 artifacts:
   files:

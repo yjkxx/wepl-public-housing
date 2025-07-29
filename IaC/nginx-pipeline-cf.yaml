@@ -29,17 +29,32 @@ Parameters:
     Type: String
     Description: 'Name of the ECS service to update'
     
+  ECSTaskDefinitionName:
+    Type: String
+    Description: 'Name of the ECS task definition (if different from service name)'
+    Default: ''
+    
   ImageTag:
     Type: String
     Default: 'latest'
     Description: 'Docker image tag to use'
+    
+  ExistingECRRepository:
+    Type: String
+    Default: ''
+    Description: 'Name of existing ECR repository to use (leave empty to create new one)'
+
+Conditions:
+  CreateNewECRRepository: !Equals [!Ref ExistingECRRepository, '']
+  HasTaskDefinitionName: !Not [!Equals [!Ref ECSTaskDefinitionName, '']]
 
 Resources:
   # ECR Repository for Nginx
   ECRRepository:
     Type: AWS::ECR::Repository
+    Condition: CreateNewECRRepository
     Properties:
-      RepositoryName: !Sub '${AWS::StackName}-nginx'
+      RepositoryName: !Sub '${AWS::StackName}-nginx-${AWS::AccountId}'
       ImageScanningConfiguration:
         ScanOnPush: true
       LifecyclePolicy:
@@ -194,7 +209,10 @@ Resources:
           - Name: AWS_ACCOUNT_ID
             Value: !Ref AWS::AccountId
           - Name: IMAGE_REPO_NAME
-            Value: !Ref ECRRepository
+            Value: !If
+              - CreateNewECRRepository
+              - !Ref ECRRepository
+              - !Ref ExistingECRRepository
           - Name: IMAGE_TAG
             Value: !Ref ImageTag
           - Name: CONTAINER_PATH
@@ -203,9 +221,14 @@ Resources:
             Value: !Ref ECSClusterName
           - Name: ECS_SERVICE_NAME
             Value: !Ref ECSServiceName
+          - Name: ECS_TASK_DEFINITION_NAME
+            Value: !If
+              - HasTaskDefinitionName
+              - !Ref ECSTaskDefinitionName
+              - !Ref ECSServiceName
       Source:
         Type: CODEPIPELINE
-        BuildSpec: !Sub |
+        BuildSpec: |
           version: 0.2
           phases:
             pre_build:
@@ -214,32 +237,35 @@ Resources:
                 - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
                 - REPOSITORY_URI=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME
                 - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
-                - IMAGE_TAG_WITH_HASH=${!IMAGE_TAG}-${!COMMIT_HASH}
+                - IMAGE_TAG_WITH_HASH=$IMAGE_TAG-$COMMIT_HASH
             build:
               commands:
-                - echo Build started on `date`
+                - echo Build started on $(date)
                 - echo "Current working directory:"
                 - pwd
                 - echo "Contents of current directory:"
                 - ls -la
-                - echo "Navigating to container path: $CONTAINER_PATH"
+                - echo "Navigating to container path:" $CONTAINER_PATH
                 - cd $CONTAINER_PATH
                 - echo "Contents of container directory:"
                 - ls -la
                 - echo "Checking for Dockerfile..."
-                - if [ ! -f "Dockerfile" ]; then echo "ERROR: Dockerfile not found in $CONTAINER_PATH"; exit 1; fi
+                - if [ ! -f "Dockerfile" ]; then echo "ERROR - Dockerfile not found in $CONTAINER_PATH"; exit 1; fi
                 - echo Building the Docker image...
                 - docker build -t $IMAGE_REPO_NAME:$IMAGE_TAG .
                 - docker tag $IMAGE_REPO_NAME:$IMAGE_TAG $REPOSITORY_URI:$IMAGE_TAG
                 - docker tag $IMAGE_REPO_NAME:$IMAGE_TAG $REPOSITORY_URI:$IMAGE_TAG_WITH_HASH
             post_build:
               commands:
-                - echo Build completed on `date`
+                - echo Build completed on $(date)
                 - echo Pushing the Docker images...
                 - docker push $REPOSITORY_URI:$IMAGE_TAG
                 - docker push $REPOSITORY_URI:$IMAGE_TAG_WITH_HASH
-                - echo Getting current task definition...
-                - TASK_DEFINITION=$(aws ecs describe-task-definition --task-definition $ECS_SERVICE_NAME --region $AWS_DEFAULT_REGION)
+                - echo Getting current task definition from service...
+                - SERVICE_INFO=$(aws ecs describe-services --cluster $ECS_CLUSTER_NAME --services $ECS_SERVICE_NAME --region $AWS_DEFAULT_REGION)
+                - TASK_DEF_ARN=$(echo $SERVICE_INFO | jq -r '.services[0].taskDefinition')
+                - echo "Current task definition ARN:" $TASK_DEF_ARN
+                - TASK_DEFINITION=$(aws ecs describe-task-definition --task-definition $TASK_DEF_ARN --region $AWS_DEFAULT_REGION)
                 - NEW_TASK_DEFINITION=$(echo $TASK_DEFINITION | jq --arg IMAGE "$REPOSITORY_URI:$IMAGE_TAG_WITH_HASH" '.taskDefinition | .containerDefinitions[0].image = $IMAGE | del(.taskDefinitionArn) | del(.revision) | del(.status) | del(.requiresAttributes) | del(.placementConstraints) | del(.compatibilities) | del(.registeredAt) | del(.registeredBy)')
                 - echo Registering new task definition...
                 - NEW_TASK_INFO=$(aws ecs register-task-definition --region $AWS_DEFAULT_REGION --cli-input-json "$NEW_TASK_DEFINITION")
@@ -295,7 +321,10 @@ Resources:
 Outputs:
   ECRRepositoryURI:
     Description: 'ECR Repository URI'
-    Value: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ECRRepository}'
+    Value: !If
+      - CreateNewECRRepository
+      - !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ECRRepository}'
+      - !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ExistingECRRepository}'
     Export:
       Name: !Sub '${AWS::StackName}-ECRRepositoryURI'
       
