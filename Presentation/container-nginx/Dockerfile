@@ -8,7 +8,7 @@ RUN apk add --no-cache \
     py3-pip \
     bash \
     dcron \
-    && pip install awscli \
+    aws-cli \
     && mkdir -p /usr/share/nginx/html/mainpage \
     && mkdir -p /var/cache/nginx/proxy_cache \
     && mkdir -p /var/log/wepl \
