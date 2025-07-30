@@ -294,7 +294,7 @@ Resources:
       VpcId: !Ref VPC
       TargetType: instance
       HealthCheckEnabled: true
-      HealthCheckPath: /
+      HealthCheckPath: /health
       HealthCheckProtocol: HTTP
       HealthCheckPort: traffic-port
       HealthCheckIntervalSeconds: 30
@@ -548,6 +548,9 @@ Resources:
       ExecutionRoleArn: !GetAtt ECSTaskExecutionRole.Arn
       Cpu: 256
       Memory: 700
+      RuntimePlatform:
+        CpuArchitecture: ARM64
+        OperatingSystemFamily: LINUX
       ContainerDefinitions:
         - Name: nginx-container
           Image: '743992917350.dkr.ecr.ap-northeast-2.amazonaws.com/wepl/webserver:latest'
@@ -558,6 +561,14 @@ Resources:
             - ContainerPort: 80
               HostPort: 0
               Protocol: tcp
+          HealthCheck:
+            Command:
+              - CMD-SHELL
+              - "curl -f http://localhost/health || exit 1"
+            Interval: 30
+            Timeout: 5
+            Retries: 3
+            StartPeriod: 60
           LogConfiguration:
             LogDriver: awslogs
             Options:

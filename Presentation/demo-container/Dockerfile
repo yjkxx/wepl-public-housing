@@ -1,6 +1,9 @@
 # Multi-stage build for multi-architecture support
 FROM nginx:alpine
 
+# Install curl for health checks
+RUN apk add --no-cache curl
+
 # Copy all website files to nginx html directory
 COPY . /usr/share/nginx/html/
 
