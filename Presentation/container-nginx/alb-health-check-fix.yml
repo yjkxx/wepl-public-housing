@@ -1,0 +1,23 @@
+# Replace the ALBTargetGroup section in your CloudFormation with this:
+
+  ALBTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: !Sub '${AWS::StackName}-tg'
+      Port: 80
+      Protocol: HTTP
+      VpcId: !Ref VPC
+      TargetType: instance
+      HealthCheckEnabled: true
+      HealthCheckPath: /health              # Changed from / to /health
+      HealthCheckProtocol: HTTP
+      HealthCheckPort: traffic-port
+      HealthCheckIntervalSeconds: 30
+      HealthCheckTimeoutSeconds: 10
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 5
+      Matcher:
+        HttpCode: '200'
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-tg'

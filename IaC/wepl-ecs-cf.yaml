@@ -2,11 +2,6 @@ AWSTemplateFormatVersion: '2010-09-09'
 Description: 'ECS Cluster with EC2 instances, VPC, NAT Gateways, and Bastion Host for Static Website'
 
 Parameters:
-  ECRImageURI:
-    Type: String
-    Description: 'ECR URI for the container image (e.g., 123456789012.dkr.ecr.us-east-1.amazonaws.com/my-nginx:latest)'
-    AllowedPattern: '^[0-9]+\.dkr\.ecr\.[a-z0-9-]+\.amazonaws\.com\/[a-zA-Z0-9-_\/]+:[a-zA-Z0-9-_\.]+$'
-  
   KeyPairName:
     Type: AWS::EC2::KeyPair::KeyName
     Description: 'EC2 Key Pair for SSH access to instances'
@@ -298,11 +293,16 @@ Resources:
       Protocol: HTTP
       VpcId: !Ref VPC
       TargetType: instance
+      HealthCheckEnabled: true
       HealthCheckPath: /
+      HealthCheckProtocol: HTTP
+      HealthCheckPort: traffic-port
       HealthCheckIntervalSeconds: 30
-      HealthCheckTimeoutSeconds: 5
+      HealthCheckTimeoutSeconds: 10
       HealthyThresholdCount: 2
       UnhealthyThresholdCount: 5
+      Matcher:
+        HttpCode: '200'
       Tags:
         - Key: Name
           Value: !Sub '${AWS::StackName}-tg'
@@ -370,19 +370,24 @@ Resources:
       Roles:
         - !Ref ECSInstanceRole
 
-  # Launch Template for ECS Instances
+  # Launch Template for ECS Instances (c7g.medium spot - always-on)
   ECSLaunchTemplate:
     Type: AWS::EC2::LaunchTemplate
     Properties:
       LaunchTemplateName: !Sub '${AWS::StackName}-ecs-lt'
       LaunchTemplateData:
-        ImageId: !Sub '{{resolve:ssm:/aws/service/ecs/optimized-ami/amazon-linux-2/recommended/image_id}}'
-        InstanceType: t3.small
+        ImageId: !Sub '{{resolve:ssm:/aws/service/ecs/optimized-ami/amazon-linux-2/arm64/recommended/image_id}}'
+        InstanceType: c7g.medium
         KeyName: !Ref KeyPairName
         SecurityGroupIds:
           - !Ref ECSSecurityGroup
         IamInstanceProfile:
           Arn: !GetAtt ECSInstanceProfile.Arn
+        InstanceMarketOptions:
+          MarketType: spot
+          SpotOptions:
+            SpotInstanceType: one-time
+            InstanceInterruptionBehavior: terminate
         UserData:
           Fn::Base64: !Sub |
             #!/bin/bash
@@ -392,16 +397,16 @@ Resources:
           - ResourceType: instance
             Tags:
               - Key: Name
-                Value: !Sub '${AWS::StackName}-ecs-instance'
+                Value: !Sub '${AWS::StackName}-ecs-spot-instance'
 
-  # Launch Template for Auto Scaling (c7g instances)
+  # Launch Template for Auto Scaling (c7g.medium on-demand instances)
   ECSAutoScalingLaunchTemplate:
     Type: AWS::EC2::LaunchTemplate
     Properties:
       LaunchTemplateName: !Sub '${AWS::StackName}-ecs-autoscaling-lt'
       LaunchTemplateData:
         ImageId: !Sub '{{resolve:ssm:/aws/service/ecs/optimized-ami/amazon-linux-2/arm64/recommended/image_id}}'
-        InstanceType: c7g.large
+        InstanceType: c7g.medium
         KeyName: !Ref KeyPairName
         SecurityGroupIds:
           - !Ref ECSSecurityGroup
@@ -416,13 +421,13 @@ Resources:
           - ResourceType: instance
             Tags:
               - Key: Name
-                Value: !Sub '${AWS::StackName}-ecs-autoscaling-instance'
+                Value: !Sub '${AWS::StackName}-ecs-ondemand-instance'
 
-  # Auto Scaling Group for t3.small instances (always-on)
+  # Auto Scaling Group for c7g.medium spot instances (always-on, 2 tasks per instance)
   ECSAutoScalingGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
     Properties:
-      AutoScalingGroupName: !Sub '${AWS::StackName}-ecs-asg'
+      AutoScalingGroupName: !Sub '${AWS::StackName}-ecs-spot-asg'
       VPCZoneIdentifier:
         - !Ref PrivateSubnetA
         - !Ref PrivateSubnetC
@@ -430,22 +435,20 @@ Resources:
         LaunchTemplateId: !Ref ECSLaunchTemplate
         Version: !GetAtt ECSLaunchTemplate.LatestVersionNumber
       MinSize: 2
-      MaxSize: 4
+      MaxSize: 6
       DesiredCapacity: 2
-      TargetGroupARNs:
-        - !Ref ALBTargetGroup
-      HealthCheckType: ELB
+      HealthCheckType: EC2
       HealthCheckGracePeriod: 300
       Tags:
         - Key: Name
-          Value: !Sub '${AWS::StackName}-ecs-asg'
+          Value: !Sub '${AWS::StackName}-ecs-spot-asg'
           PropagateAtLaunch: false
 
-  # Auto Scaling Group for c7g instances (scaling)
+  # Auto Scaling Group for c7g.medium on-demand instances (scaling)
   ECSScalingAutoScalingGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
     Properties:
-      AutoScalingGroupName: !Sub '${AWS::StackName}-ecs-scaling-asg'
+      AutoScalingGroupName: !Sub '${AWS::StackName}-ecs-ondemand-asg'
       VPCZoneIdentifier:
         - !Ref PrivateSubnetA
         - !Ref PrivateSubnetC
@@ -455,13 +458,11 @@ Resources:
       MinSize: 0
       MaxSize: 10
       DesiredCapacity: 0
-      TargetGroupARNs:
-        - !Ref ALBTargetGroup
-      HealthCheckType: ELB
+      HealthCheckType: EC2
       HealthCheckGracePeriod: 300
       Tags:
         - Key: Name
-          Value: !Sub '${AWS::StackName}-ecs-scaling-asg'
+          Value: !Sub '${AWS::StackName}-ecs-ondemand-asg'
           PropagateAtLaunch: false
 
   # Auto Scaling Policies
@@ -483,19 +484,19 @@ Resources:
       ScalingAdjustment: -1
       PolicyType: SimpleScaling
 
-  # CloudWatch Alarms for Auto Scaling
+  # CloudWatch Alarms for Auto Scaling (based on ECS capacity reservation)
   CPUAlarmHigh:
     Type: AWS::CloudWatch::Alarm
     Properties:
-      AlarmDescription: 'Scale up on high CPU'
+      AlarmDescription: 'Scale up when no capacity for new container'
       AlarmActions:
         - !Ref ECSScaleUpPolicy
       MetricName: CPUReservation
       Namespace: AWS/ECS
       Statistic: Average
-      Period: 300
-      EvaluationPeriods: 2
-      Threshold: 80
+      Period: 60
+      EvaluationPeriods: 1
+      Threshold: 85
       ComparisonOperator: GreaterThanThreshold
       Dimensions:
         - Name: ClusterName
@@ -504,16 +505,34 @@ Resources:
   CPUAlarmLow:
     Type: AWS::CloudWatch::Alarm
     Properties:
-      AlarmDescription: 'Scale down on low CPU'
+      AlarmDescription: 'Scale down when excess capacity available'
       AlarmActions:
         - !Ref ECSScaleDownPolicy
       MetricName: CPUReservation
       Namespace: AWS/ECS
       Statistic: Average
-      Period: 300
-      EvaluationPeriods: 2
-      Threshold: 20
+      Period: 60
+      EvaluationPeriods: 1
+      Threshold: 50
       ComparisonOperator: LessThanThreshold
+      Dimensions:
+        - Name: ClusterName
+          Value: !Ref ECSCluster
+
+  # Memory-based scaling alarm to ensure memory capacity
+  MemoryAlarmHigh:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: 'Scale up when memory reservation is high'
+      AlarmActions:
+        - !Ref ECSScaleUpPolicy
+      MetricName: MemoryReservation
+      Namespace: AWS/ECS
+      Statistic: Average
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 70
+      ComparisonOperator: GreaterThanThreshold
       Dimensions:
         - Name: ClusterName
           Value: !Ref ECSCluster
@@ -527,13 +546,17 @@ Resources:
       RequiresCompatibilities:
         - EC2
       ExecutionRoleArn: !GetAtt ECSTaskExecutionRole.Arn
+      Cpu: 256
+      Memory: 700
       ContainerDefinitions:
         - Name: nginx-container
-          Image: !Ref ECRImageURI
-          Memory: 512
+          Image: '743992917350.dkr.ecr.ap-northeast-2.amazonaws.com/wepl/webserver:latest'
+          Memory: 400
+          Cpu: 128
           Essential: true
           PortMappings:
             - ContainerPort: 80
+              HostPort: 0
               Protocol: tcp
           LogConfiguration:
             LogDriver: awslogs
@@ -560,7 +583,7 @@ Resources:
       ServiceName: !Sub '${AWS::StackName}-service'
       Cluster: !Ref ECSCluster
       TaskDefinition: !Ref ECSTaskDefinition
-      DesiredCount: 2
+      DesiredCount: 4
       LaunchType: EC2
       LoadBalancers:
         - ContainerName: nginx-container
@@ -572,6 +595,61 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub '${AWS::StackName}-service'
+
+  # ECS Service Scaling Target
+  ECSServiceScalingTarget:
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
+    Properties:
+      MaxCapacity: 40
+      MinCapacity: 4
+      ResourceId: !Sub 'service/${ECSCluster}/${ECSService.Name}'
+      RoleARN: !GetAtt ECSServiceScalingRole.Arn
+      ScalableDimension: ecs:service:DesiredCount
+      ServiceNamespace: ecs
+
+  # ECS Service Scaling Role
+  ECSServiceScalingRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: application-autoscaling.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: ECSServiceScalingPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ecs:DescribeServices
+                  - ecs:UpdateService
+                  - cloudwatch:DescribeAlarms
+                  - cloudwatch:PutMetricAlarm
+                  - cloudwatch:DeleteAlarms
+                  - application-autoscaling:*
+                Resource: '*'
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-ecs-service-scaling-role'
+
+  # ECS Service Scaling Policy
+  ECSServiceScalingPolicy:
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Properties:
+      PolicyName: !Sub '${AWS::StackName}-ecs-service-scaling-policy'
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId: !Ref ECSServiceScalingTarget
+      TargetTrackingScalingPolicyConfiguration:
+        PredefinedMetricSpecification:
+          PredefinedMetricType: ALBRequestCountPerTarget
+          ResourceLabel: !Sub '${ApplicationLoadBalancer.LoadBalancerFullName}/${ALBTargetGroup.TargetGroupFullName}'
+        TargetValue: 5000.0
+        ScaleOutCooldown: 60
+        ScaleInCooldown: 120
 
 Outputs:
   VPCId:

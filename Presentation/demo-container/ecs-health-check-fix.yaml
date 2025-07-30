@@ -1,0 +1,65 @@
+# ECS Health Check Fix for CloudFormation Template
+# Replace the ALBTargetGroup section in your CloudFormation template with this:
+
+ALBTargetGroup:
+  Type: AWS::ElasticLoadBalancingV2::TargetGroup
+  Properties:
+    Name: !Sub '${AWS::StackName}-tg'
+    Port: 80
+    Protocol: HTTP
+    VpcId: !Ref VPC
+    TargetType: instance
+    HealthCheckEnabled: true
+    HealthCheckPath: /health          # Changed from / to /health
+    HealthCheckProtocol: HTTP
+    HealthCheckPort: traffic-port
+    HealthCheckIntervalSeconds: 30    # How often to check
+    HealthCheckTimeoutSeconds: 5      # Reduced from 10 to 5 seconds
+    HealthyThresholdCount: 2          # Number of successful checks to mark healthy
+    UnhealthyThresholdCount: 3        # Reduced from 5 to 3 for faster detection
+    Matcher:
+      HttpCode: '200'
+    Tags:
+      - Key: Name
+        Value: !Sub '${AWS::StackName}-tg'
+
+# Also update the ECS Task Definition to add a container health check:
+
+ECSTaskDefinition:
+  Type: AWS::ECS::TaskDefinition
+  Properties:
+    Family: !Sub '${AWS::StackName}-task'
+    NetworkMode: bridge
+    RequiresCompatibilities:
+      - EC2
+    ExecutionRoleArn: !GetAtt ECSTaskExecutionRole.Arn
+    Cpu: 1024
+    Memory: 2048
+    ContainerDefinitions:
+      - Name: nginx-container
+        Image: '743992917350.dkr.ecr.ap-northeast-2.amazonaws.com/wepl/webserver:latest'
+        Memory: 1000
+        Cpu: 500
+        Essential: true
+        PortMappings:
+          - ContainerPort: 80
+            HostPort: 0
+            Protocol: tcp
+        # Add container health check
+        HealthCheck:
+          Command:
+            - CMD-SHELL
+            - 'curl -f http://localhost/health || exit 1'
+          Interval: 30
+          Timeout: 5
+          Retries: 3
+          StartPeriod: 60      # Give container 60 seconds to start
+        LogConfiguration:
+          LogDriver: awslogs
+          Options:
+            awslogs-group: !Ref ECSLogGroup
+            awslogs-region: !Ref AWS::Region
+            awslogs-stream-prefix: ecs
+    Tags:
+      - Key: Name
+        Value: !Sub '${AWS::StackName}-task'

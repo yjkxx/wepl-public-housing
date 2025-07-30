@@ -1,0 +1,10 @@
+# Docker ignore file to exclude unnecessary files from the build context
+.git
+.gitignore
+Dockerfile
+docker-compose.yml
+README.md
+*.md
+.DS_Store
+Thumbs.db
+build-multiarch.sh

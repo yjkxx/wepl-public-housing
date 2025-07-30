@@ -1,0 +1,7 @@
+services:
+  nginx-demo:
+    build: .
+    ports:
+      - "8080:80"
+    container_name: demo-container
+    restart: unless-stopped

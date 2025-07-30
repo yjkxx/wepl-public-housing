@@ -1,0 +1,43 @@
+# Add this to your CloudFormation template after ECSTaskExecutionRole
+
+  # ECS Task Role for S3 Access
+  ECSTaskRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${AWS::StackName}-ecs-task-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ecs-tasks.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Policies:
+        - PolicyName: S3AccessPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:ListBucket
+                Resource:
+                  - arn:aws:s3:::wepl-mainpage
+                  - arn:aws:s3:::wepl-mainpage/*
+                  - arn:aws:s3:::wepl-posting-pages
+                  - arn:aws:s3:::wepl-posting-pages/*
+              - Effect: Allow
+                Action:
+                  - s3:ListBucket
+                Resource:
+                  - arn:aws:s3:::wepl-mainpage
+                  - arn:aws:s3:::wepl-posting-pages
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-ecs-task-role'
+
+# Then modify your ECSTaskDefinition to include the TaskRoleArn:
+# Add this line to your ECSTaskDefinition:
+#   TaskRoleArn: !GetAtt ECSTaskRole.Arn
