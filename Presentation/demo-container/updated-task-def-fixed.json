@@ -1,0 +1,49 @@
+{
+  "family": "ecs-webserver-task",
+  "networkMode": "bridge",
+  "requiresCompatibilities": [
+    "EC2"
+  ],
+  "cpu": "461",
+  "memory": "819",
+  "executionRoleArn": "arn:aws:iam::743992917350:role/ecs-webserver-ECSTaskExecutionRole-i7RpG149KtAD",
+  "runtimePlatform": {
+    "cpuArchitecture": "ARM64",
+    "operatingSystemFamily": "LINUX"
+  },
+  "containerDefinitions": [
+    {
+      "name": "nginx-container",
+      "image": "743992917350.dkr.ecr.ap-northeast-2.amazonaws.com/ecs-demo-pipeline-nginx-743992917350:latest-0a91267",
+      "cpu": 128,
+      "memory": 400,
+      "portMappings": [
+        {
+          "containerPort": 80,
+          "hostPort": 0,
+          "protocol": "tcp",
+          "name": "nginx-container-80-tcp"
+        }
+      ],
+      "essential": true,
+      "environment": [],
+      "environmentFiles": [],
+      "mountPoints": [],
+      "volumesFrom": [],
+      "extraHosts": [],
+      "dockerSecurityOptions": [],
+      "ulimits": [],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/ecs-webserver",
+          "awslogs-region": "ap-northeast-2",
+          "awslogs-stream-prefix": "ecs"
+        },
+        "secretOptions": []
+      },
+      "systemControls": [],
+      "credentialSpecs": []
+    }
+  ]
+}

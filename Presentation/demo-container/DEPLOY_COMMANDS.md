@@ -4,7 +4,7 @@
 # 1. Set your GitHub token (replace with your actual token)
 export GITHUB_TOKEN="your_github_personal_access_token_here"
 
-# 2. Deploy the pipeline with correct ContainerPath
+# 2. Deploy the pipeline with correct ContainerPath and existing ECR repository
 aws cloudformation create-stack \
   --stack-name "nginx-demo-pipeline" \
   --template-body file://../../IaC/nginx-pipeline-cf.yaml \
@@ -16,6 +16,7 @@ aws cloudformation create-stack \
     ParameterKey=ECSClusterName,ParameterValue="ecs-webserver-cluster" \
     ParameterKey=ECSServiceName,ParameterValue="ecs-webserver-service" \
     ParameterKey=ImageTag,ParameterValue="latest" \
+    ParameterKey=ExistingECRRepository,ParameterValue="ecs-demo-pipeline-nginx-743992917350" \
   --capabilities CAPABILITY_IAM \
   --region ap-northeast-2
 

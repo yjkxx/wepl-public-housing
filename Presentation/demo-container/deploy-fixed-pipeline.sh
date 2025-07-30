@@ -49,6 +49,7 @@ aws cloudformation create-stack \
     ParameterKey=ECSClusterName,ParameterValue="$ECS_CLUSTER_NAME" \
     ParameterKey=ECSServiceName,ParameterValue="$ECS_SERVICE_NAME" \
     ParameterKey=ImageTag,ParameterValue="latest" \
+    ParameterKey=ExistingECRRepository,ParameterValue="ecs-demo-pipeline-nginx-743992917350" \
   --capabilities CAPABILITY_IAM \
   --region ap-northeast-2
 
